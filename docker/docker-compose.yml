@@ -1,0 +1,65 @@
+volumes:
+  database:
+
+services:
+  db:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: riggedbot
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+    volumes:
+      - database:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@email.com
+      PGADMIN_DEFAULT_PASSWORD: mysecretpassword
+    ports: ["8080:80"]
+    depends_on:
+      db:
+        condition: service_healthy
+  riggedbotapp:
+    profiles: ["prod"]
+    build:
+      context: ../discord
+      dockerfile: Dockerfile
+      args: { NODE_ENV: production }
+    image: riggedbotapp:latest
+    restart: unless-stopped
+    env_file: [../discord/.env]
+    environment:
+      NODE_ENV: production
+    user: "node"
+    read_only: true
+    tmpfs: ["/tmp"]
+    depends_on:
+      db:
+        condition: service_healthy
+  riggedbotapp-dev:
+    profiles: ["dev"]
+    build:
+      context: ../discord
+      dockerfile: Dockerfile
+      args: { NODE_ENV: development }
+    image: riggedbotapp:dev
+    restart: unless-stopped
+    env_file: [../discord/.env]
+    environment:
+      NODE_ENV: development
+    user: "node"
+    volumes:
+      - ../discord:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["npm","run","dev"]
+

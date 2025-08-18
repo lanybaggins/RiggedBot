@@ -1,0 +1,10 @@
+# Don’t send huge or sensitive stuff to Docker daemon
+node_modules
+.git
+.gitignore
+.dockerignore
+.vscode
+Dockerfile
+npm-debug.log*
+../docker
+../setup
