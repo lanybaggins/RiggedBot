@@ -43,25 +43,25 @@ export const command = {
       return;
     }
     const channelId = guildSettings.leagueChannelId;
-    var channel = client.channels.cache.get(channelId);
+    let channel = client.channels.cache.get(channelId);
     if (!channel) {
-      var channel = await client.channels.fetch(channelId);
+      channel = await client.channels.fetch(channelId);
     }
     if (!channel) {
       await interactionReply(interaction, "League channel not found.");
       return;
     }
     const gameId = interaction.id;
-    var host = interaction.options.getUser("host");
+    let host = interaction.options.getUser("host");
     host = host ? host : interaction.user;
     if (host.bot) {
       await interactionReply(interaction, `You cannot specify a bot as the host!`);
       return;
     }
-    var playerCount = interaction.options.getInteger("players");
+    let playerCount = interaction.options.getInteger("players");
     playerCount = playerCount ? playerCount : 6;
-    var imposterCount = 2;
-    var game = new RiggedLeagueGame();
+    let imposterCount = 2;
+    let game = new RiggedLeagueGame();
     game.sendAnnouncement(channel, gameId, host, playerCount, imposterCount);
     await interactionReply(interaction, `Command ran successfully! A new league game has been announced in ${channel}.`);
   },

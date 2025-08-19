@@ -80,14 +80,14 @@ export const command = {
   callback: async (client, interaction) => {
     const author = interaction.user;
     const host = interaction.options.getUser("host");
-    var imposterCount = interaction.options.getInteger("imposters");
+    let imposterCount = interaction.options.getInteger("imposters");
     if (imposterCount === null) {
       imposterCount = 2;
     }
-    var users = [];
-    var userIds = [];
-    for (var i = 1; i <= 6; i++) {
-      var user = interaction.options.getUser(`user${i}`);
+    let users = [];
+    let userIds = [];
+    for (let i = 1; i <= 6; i++) {
+      let user = interaction.options.getUser(`user${i}`);
       if (null === user) {
         continue;
       }
@@ -107,8 +107,8 @@ export const command = {
       userIds.push(user.id);
     }
     const userCount = users.length;
-    var imposter1 = Math.floor(Math.random() * userCount);
-    var imposter2;
+    let imposter1 = Math.floor(Math.random() * userCount);
+    let imposter2;
     if (imposterCount === 2) {
       do {
         imposter2 = Math.floor(Math.random() * userCount);
@@ -118,13 +118,13 @@ export const command = {
     if (rollAbilities === null) {
       rollAbilities = false
     }
-    var userSettings = [];
+    let userSettings = [];
     do {
-      var abilityCount = 0;
-      for (var i = 0; i < users.length; i++) {
-        var isImposter = i === imposter1 || i === imposter2;
-        var randomCredits = Math.floor(Math.random() * 100) + 1;
-        var ability = "None";
+      let abilityCount = 0;
+      for (let i = 0; i < users.length; i++) {
+        let isImposter = i === imposter1 || i === imposter2;
+        let randomCredits = Math.floor(Math.random() * 100) + 1;
+        let ability = "None";
         if (rollAbilities) {
           if (isImposter) {
             if (randomCredits <= 60) {
@@ -152,7 +152,7 @@ export const command = {
     } while (rollAbilities && (abilityCount < 2 || abilityCount > 4));
     const hostString = host ? `${host.username}` : "No host";
     if (host) {
-      var fields = [
+      let fields = [
         {
           name: "Game Creator",
           value: `${author.username}`,
@@ -179,8 +179,8 @@ export const command = {
           inline: true
         }
       ];
-      var fields2 = [];
-      for (var i = 0; i < users.length; i++) {
+      let fields2 = [];
+      for (let i = 0; i < users.length; i++) {
         const user = users[i];
         const userSetting = userSettings[i];
         fields2.push({
@@ -189,7 +189,7 @@ export const command = {
           inline: true,
         });
       }
-      var embeds = [
+      let embeds = [
         {
           title: `Rigged Caps Practice Game`,
           description: `You are the host for this practice game.`,
@@ -206,11 +206,11 @@ export const command = {
         embeds: embeds,
       });
     }
-    var isSolo = imposter2 === undefined;
-    for (var i = 0; i < users.length; i++) {
+    let isSolo = imposter2 === undefined;
+    for (let i = 0; i < users.length; i++) {
       const user = users[i];
       const userSetting = userSettings[i];
-      var fields = [
+      let fields = [
         {
           name: "Game Creator",
           value: `${author.username}`,
@@ -240,7 +240,7 @@ export const command = {
           inline: true,
         });
       }
-      var embed = {
+      let embed = {
         title: `Rigged Caps Practice Game`,
         description: `You have been assigned a role of **${userSetting.role}**.`,
         fields: fields,

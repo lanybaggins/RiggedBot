@@ -10,15 +10,15 @@ const BUTTONID_BUY_SHERIFF = "league:buy:Sheriff";
 
 export class RiggedLeagueGame {
   async initFromAnnouncement(interaction) {
-    var message = interaction.message;
-    var embeds = message.embeds;
+    let message = interaction.message;
+    let embeds = message.embeds;
     const fields = embeds[0].fields;
 
     const hostField = fields.find((field) => field.name === "Host");
     // convert hostIdString to a user object
     const hostIdString = hostField.value;
     const hostId = hostIdString.replace(/<@!?(\d+)>/, "$1");
-    var host = await interaction.client.users.cache.get(hostId);
+    let host = await interaction.client.users.cache.get(hostId);
     if (!host) {
       host = interaction.client.users.fetch(hostId).catch(() => null);
     }
@@ -31,15 +31,15 @@ export class RiggedLeagueGame {
     const gameIdField = fields.find((field) => field.name === "Game ID");
     this.gameId = gameIdField.value;
 
-    var statusField = fields.find((field) => field.name === "Status");
+    let statusField = fields.find((field) => field.name === "Status");
     this.status = statusField.value;
 
-    var playerCountField = fields.find(
+    let playerCountField = fields.find(
       (field) => field.name === "Player Count"
     );
     this.playerCount = parseInt(playerCountField.value);
 
-    var imposterCountField = fields.find(
+    let imposterCountField = fields.find(
       (field) => field.name === "Imposter Count"
     );
     this.imposterCount = parseInt(imposterCountField.value);
@@ -49,7 +49,7 @@ export class RiggedLeagueGame {
         field.name.startsWith("Player") && field.name !== "Player Count"
     );
     this.playerIds = [];
-    var signedUpPlayers = playerFields.filter(
+    let signedUpPlayers = playerFields.filter(
       (field) => field.value !== "open"
     );
     for (const field of signedUpPlayers) {
@@ -58,13 +58,13 @@ export class RiggedLeagueGame {
     }
   }
   async initFromPlayerDM(interaction) {
-    var message = interaction.message;
-    var embeds = message.embeds;
+    let message = interaction.message;
+    let embeds = message.embeds;
     const fields = embeds[0].fields;
     const hostField = fields.find((field) => field.name === "Host");
     // convert hostField Username to a user object
     const hostUsername = hostField.value;
-    var host = interaction.client.users.cache.find(
+    let host = interaction.client.users.cache.find(
       (user) => user.username === hostUsername
     );
     if (!host) {
@@ -78,7 +78,7 @@ export class RiggedLeagueGame {
     this.gameId = gameIdField.value;
   }
   buildAnnouncement() {
-    var row = new ActionRowBuilder()
+    let row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId(BUTTONID_SIGNUP)
@@ -91,7 +91,7 @@ export class RiggedLeagueGame {
           .setLabel("Cancel")
           .setStyle(ButtonStyle.Danger)
       );
-    var embed = {
+    let embed = {
       title: "Rigged Caps - League Game Starting Soon",
       description: "Sign up for this league game by clicking the button below.",
       fields: [
@@ -122,7 +122,7 @@ export class RiggedLeagueGame {
       ],
       timestamp: new Date().toISOString(),
     };
-    for (var i = 1; i <= this.playerCount; i++) {
+    for (let i = 1; i <= this.playerCount; i++) {
       embed.fields.push({
         name: `Player ${i}`,
         value: "open",
@@ -163,10 +163,10 @@ export class RiggedLeagueGame {
   async signup(interaction) {
     await this.initFromAnnouncement(interaction)
     const message = interaction.message;
-    var embeds = message.embeds;
+    let embeds = message.embeds;
     const fields = embeds[0].fields;
-    var statusField = fields.find((field) => field.name === "Status");
-    var components = message.components;
+    let statusField = fields.find((field) => field.name === "Status");
+    let components = message.components;
 
     // check that the user isn't the host
     if (this.host.id === `${interaction.user.id}`) {
@@ -198,9 +198,9 @@ export class RiggedLeagueGame {
     console.log(
       `PlayerCount: ${this.playerCount}, PlayerIds length: ${this.playerIds.length}`
     );
-    var gameFull = this.playerIds.length >= this.playerCount;
+    let gameFull = this.playerIds.length >= this.playerCount;
     if (gameFull) {
-      var row = new ActionRowBuilder()
+      let row = new ActionRowBuilder()
         .addComponents(
           new ButtonBuilder()
             .setCustomId(BUTTONID_START)
@@ -227,11 +227,11 @@ export class RiggedLeagueGame {
   }
   async resolvePlayerIds(interaction) {
     // resolve the playerIds to user objects
-    var playerResolveError = null;
-    var players = [];
+    let playerResolveError = null;
+    let players = [];
     for (const playerId of this.playerIds) {
       //console.log(`Resolving player ID: ${playerId}`);
-      var player = interaction.client.users.cache.get(playerId);
+      let player = interaction.client.users.cache.get(playerId);
       if (!player) {
         player = await interaction.client.users
           .fetch(playerId)
@@ -254,9 +254,9 @@ export class RiggedLeagueGame {
   async start(interaction) {
     await this.initFromAnnouncement(interaction)
     const message = interaction.message;
-    var embeds = message.embeds;
+    let embeds = message.embeds;
     const fields = embeds[0].fields;
-    var statusField = fields.find((field) => field.name === "Status");
+    let statusField = fields.find((field) => field.name === "Status");
     // check that the user is the host
     if (this.host.id !== `${interaction.user.id}`) {
       await interactionReply(interaction, "You are not the host of this game.");
@@ -279,8 +279,8 @@ export class RiggedLeagueGame {
       return;
     });
     // roll one or two players to be imposters randomly, this.imposterCount
-    var imposter1 = Math.floor(Math.random() * this.playerIds.length);
-    var imposter2;
+    let imposter1 = Math.floor(Math.random() * this.playerIds.length);
+    let imposter2;
     if (this.imposterCount === 2) {
       do {
         imposter2 = Math.floor(Math.random() * this.playerIds.length);
@@ -312,9 +312,9 @@ export class RiggedLeagueGame {
   async cancel(interaction) {
     await this.initFromAnnouncement(interaction)
     const message = interaction.message;
-    var embeds = message.embeds;
-    var fields = embeds[0].fields;
-    var statusField = fields.find((field) => field.name === "Status");
+    let embeds = message.embeds;
+    let fields = embeds[0].fields;
+    let statusField = fields.find((field) => field.name === "Status");
     // check that the user is the host
     console.log(`Host: ${JSON.stringify(this.host)}`);
     if (this.host.id !== `${interaction.user.id}`) {
@@ -339,10 +339,10 @@ export class RiggedLeagueGame {
   rollCredits() {
     // temporary solution to roll credits for players
     // roll for random credits that can be spent on abilities.  Credits will be either 0, 250, or 500, with a 1/5 chance for 500 and a 2/5 chance for 250, and a 2/5 chance for 0.
-    var playerCredits = [];
+    let playerCredits = [];
     for (const playerId of this.playerIds) {
-      var random = Math.floor(Math.random() * 100) + 1; // random credits between 1 and 100
-      var credits;
+      let random = Math.floor(Math.random() * 100) + 1; // random credits between 1 and 100
+      let credits;
       if (random <= 20) {
         credits = 500; // 1/5 chance
       } else if (random <= 60) {
@@ -359,15 +359,15 @@ export class RiggedLeagueGame {
   }
   async sendStartToPlayer(user) {
     console.log(`Sending start message to player ${user.id}`);
-    var isImposter =
+    let isImposter =
       user.id === this.imposter1.id || user.id === this.imposter2?.id;
-    var role = isImposter ? "Imposter" : "Crewmate";
+    let role = isImposter ? "Imposter" : "Crewmate";
     // get credits from this.playerCredits
-    var creditsObject = this.playerCredits.find(
+    let creditsObject = this.playerCredits.find(
       (pc) => pc.playerId === user.id
     );
-    var credits = creditsObject.credits;
-    var fields = [
+    let credits = creditsObject.credits;
+    let fields = [
       {
         name: "Game ID",
         value: this.gameId,
@@ -390,7 +390,7 @@ export class RiggedLeagueGame {
       },
     ];
     if (isImposter && this.imposterCount === 2) {
-      var imposterPartner =
+      let imposterPartner =
         this.imposter1.id === user.id ? this.imposter2 : this.imposter1;
       fields.push({
         name: "Imposter Partner",
@@ -398,14 +398,14 @@ export class RiggedLeagueGame {
         inline: true,
       });
     }
-    var embed = {
+    let embed = {
       title:
         "If you have credits you can purchase them using the buttons below.",
       description: `You have been chosen to be ${role}.`,
       fields: fields,
       timestamp: new Date().toISOString(),
     };
-    var components = [];
+    let components = [];
     if (isImposter) {
       if (credits >= 250) {
         components.push(
@@ -441,9 +441,9 @@ export class RiggedLeagueGame {
         );
       }
     }
-    var rows = [];
+    let rows = [];
     if (components.length > 0) {
-      var row = new ActionRowBuilder();
+      let row = new ActionRowBuilder();
       components.forEach((component) => {
         row.addComponents(component);
       });
@@ -458,7 +458,7 @@ export class RiggedLeagueGame {
   async sendStartToHost() {
     // send a message to the host with the game details, player roles and credits
     console.log(`Sending start message to host ${this.host.id}`);
-    var embedMain = {
+    let embedMain = {
       title: "League Game Started",
       description: `The game has started! Here are the details:`,
       fields: [
@@ -480,16 +480,16 @@ export class RiggedLeagueGame {
       ],
       timestamp: new Date().toISOString(),
     };
-    var playerEmbeds = [];
+    let playerEmbeds = [];
     this.players.forEach((player) => {
-      var isImposter =
+      let isImposter =
         player.id === this.imposter1.id || player.id === this.imposter2?.id;
-      var role = isImposter ? "Imposter" : "Crewmate";
-      var creditsObject = this.playerCredits.find(
+      let role = isImposter ? "Imposter" : "Crewmate";
+      let creditsObject = this.playerCredits.find(
         (pc) => pc.playerId === player.id
       );
-      var credits = creditsObject.credits;
-      var embed = {
+      let credits = creditsObject.credits;
+      let embed = {
         fields: [
           {
             name: "Player",
@@ -510,8 +510,8 @@ export class RiggedLeagueGame {
       };
       playerEmbeds.push(embed);
     });
-    var components = [];
-    var embeds = [embedMain, ...playerEmbeds];
+    let components = [];
+    let embeds = [embedMain, ...playerEmbeds];
     await this.host.send({
       content: "League Game Details",
       embeds: embeds,
@@ -521,16 +521,16 @@ export class RiggedLeagueGame {
   async buyAbility(interaction) {
     await this.initFromPlayerDM(interaction)
     // get credits from fields
-    var message = interaction.message;
-    var embeds = message.embeds;
+    let message = interaction.message;
+    let embeds = message.embeds;
     const fields = embeds[0].fields;
-    var creditsField = fields.find(
+    let creditsField = fields.find(
       (field) => field.name === "Available Credits"
     );
-    var credits = parseInt(creditsField.value);
+    let credits = parseInt(creditsField.value);
     // determine which ability was purchased
-    var abilityCost = 0;
-    var ability = "unknown";
+    let abilityCost = 0;
+    let ability = "unknown";
     if (
       interaction.customId === BUTTONID_BUY_SABOTAGECOMMS
     ) {

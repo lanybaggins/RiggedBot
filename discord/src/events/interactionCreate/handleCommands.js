@@ -5,8 +5,8 @@ import interactionReply from "../../utils/discord/interactionReply.js";
 export default async (client, interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  var localCommands = undefined;
-  var commandObject = undefined;
+  let localCommands = undefined;
+  let commandObject = undefined;
   try {
     const userId = interaction.member ? interaction.member.id : interaction.user.id;
     console.log(`Handling command '${interaction.commandName}' by user '${userId}'.`);
