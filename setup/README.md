@@ -13,7 +13,27 @@ sudo chown -R $(whoami):$(whoami) /usr/src/RiggedBot
 5. IP for pgAdmin on my machine is http://172.19.95.204:8080
 
 # Linux setup
+
 ```bash
+#Set up gh via: https://github.com/cli/cli/blob/trunk/docs/install_linux.md#debian
+(type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \
+  && sudo mkdir -p -m 755 /etc/apt/keyrings \
+  && out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+  && cat $out | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+  && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+  && sudo mkdir -p -m 755 /etc/apt/sources.list.d \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+  && sudo apt update \
+  && sudo apt install gh -y
+
+# Log in to gh.  Choose Github.com; HTTPS; No, do not use GitHub credentials; Paste an authentication token; paste auth token
+gh auth login
+# Set git to use gh for authentication
+gh auth setup-git
+# Clone the repo
+cd /usr/src
+gh repo clone lanybaggins/RiggedBot
+
 # install nodemon
 npm install -g nodemon
 
@@ -36,27 +56,34 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 sudo docker run hello-world
 
 # Set up docker compose
-mkdir /usr/src/RiggedBot
-# copy docker-compose.yml to the server at /srv/docker (edit passwords)
 cd /usr/src/RiggedBot/docker
+nano .env
+# Paste the following
+: '
+COMPOSE_PROFILES=prod
+COMPOSE_PROJECT_NAME=riggedbot
+POSTGRES_PASSWORD=change-me
+'
+
+# Set up Discord API key
+nano /usr/src/RiggedBot/discord/.env
+: '
+TOKEN = MYKEYHERE
+'
+
 # run docker compose
 sudo docker compose up --detach --wait
 docker compose ps
 # view the logs
-docker logs -f docker-discord-app-1
-```
-Set up gh via: https://github.com/cli/cli/blob/trunk/docs/install_linux.md#debian
-Then clone the repo
-``` bash
-cd /usr/src
-gh repo clone lanybaggins/RiggedBot
+docker logs -f riggedbot-riggedbotapp-1
+
 ```
 
 # Database
 
 1. For production, connect over SSH tunnel
 ``` powershell
-& ssh -i "$env:documents\Source\Oracle Keys\ssh-key-2025-08-13.key" -L 8081:localhost:8080 ubuntu@my.ip.add.ress
+& ssh -i "$env:documents\Source\Oracle Keys\ssh-key-2025-08-13.key" -L 8081:localhost:8081 ubuntu@my.ip.add.ress
 ```
 TIP: Add that tunnel to SecureCRT for easier use in the future
 2. Go to pgAdmin in your browser.
