@@ -228,7 +228,7 @@ export const command = {
         },
         {
           name: "Ability",
-          value: rollAbilities ? `${userSetting.ability}` : "Contact the host",
+          value: rollAbilities ? `${userSetting.ability}` : "The host will assign abilities.",
           inline: true,
         },
       ];
