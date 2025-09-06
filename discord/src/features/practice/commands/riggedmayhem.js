@@ -4,7 +4,7 @@ import interactionReply from "../../../utils/discord/interactionReply.js";
 export const command = {
   name: "riggedmayhem",
   description: "Starts a game of Rigged Caps.",
-  developersOnly: true,
+  //developersOnly: true,
   deferReply: true,
   options: [
     {
@@ -52,6 +52,10 @@ export const command = {
   callback: async (client, interaction) => {
     const author = interaction.user;
     const host = interaction.options.getUser("host");
+    if (author.username !== "lanybaggins") {
+      await interactionReply(interaction, `You cannot start this type of game!`);
+      return;
+    }
     let users = [];
     let userIds = [];
     for (let i = 1; i <= 6; i++) {
