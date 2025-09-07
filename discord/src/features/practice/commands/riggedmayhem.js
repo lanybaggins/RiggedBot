@@ -47,6 +47,11 @@ export const command = {
       name: "host",
       description: "The host of the game.",
       type: ApplicationCommandOptionType.User,
+    },
+    {
+      name: "reverse",
+      description: "Reverse mayhem.",
+      type: ApplicationCommandOptionType.Boolean,
     }
   ],
   callback: async (client, interaction) => {
@@ -56,6 +61,7 @@ export const command = {
       await interactionReply(interaction, `You cannot start this type of game!`);
       return;
     }
+    let reverse = interaction.options.getBoolean("reverse") ? true : false;
     let users = [];
     let userIds = [];
     for (let i = 1; i <= 6; i++) {
@@ -83,8 +89,8 @@ export const command = {
       let partnerMod = i % 2 == 0 ? 1 : -1;
       userSettings.push({
         user: users[i],
-        role: "Imposter",
-        isImposter: true,
+        role: reverse ? "Crewmate" : "Imposter",
+        isImposter: !reverse,
         partner: users[i + partnerMod],
       });
     }
@@ -108,7 +114,7 @@ export const command = {
         },
         {
           name: "Imposter Count",
-          value: `mayhem (6)`,
+          value: `${reverse ? "reverse mayhem (0)" : "mayhem (6)"}`,
           inline: true,
         }
       ];
@@ -125,7 +131,7 @@ export const command = {
       let embeds = [
         {
           title: `Rigged Caps Mayhem Practice Game`,
-          description: `You are the host for this mayhem practice game.  All players are imposters with a partner.`,
+          description: `You are the host for this mayhem practice game.  All players are ${reverse ? "crewmates" : "imposters with a partner"}.`,
           fields: fields,
           timestamp: new Date().toISOString(),
         },
@@ -155,20 +161,22 @@ export const command = {
         },
         {
           name: "Role",
-          value: 'Imposter',
+          value: `${userSetting.role}`,
           inline: true,
         },
         {
           name: "Ability",
           value: "The host will assign abilities.",
           inline: true,
-        },
-        {
+        }
+      ];
+      if (!reverse) {
+        fields.push({
           name: "Teammate",
           value: `${userSetting.partner.username}`,
           inline: true,
-        },
-      ];
+        });
+      }
       let embed = {
         title: `Rigged Caps Practice Game`,
         description: `You have been assigned a role of **${userSetting.role}**.`,
