@@ -73,14 +73,14 @@ export const command = {
         await interactionReply(interaction, `You cannot specify a bot as a player!`);
         return;
       }
-      //if (host && user.id === host.id) {
-      //  await interactionReply(interaction, `You cannot specify the host as a player!`);
-      //  return;
-      //}
-      //if (userIds.includes(user.id)) {
-      //  await interactionReply(interaction, `You cannot specify the same user multiple times!`);
-      //  return;
-      //}
+      if (host && user.id === host.id) {
+        await interactionReply(interaction, `You cannot specify the host as a player!`);
+        return;
+      }
+      if (userIds.includes(user.id)) {
+        await interactionReply(interaction, `You cannot specify the same user multiple times!`);
+        return;
+      }
       users.push(user);
       userIds.push(user.id);
     }
