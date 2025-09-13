@@ -11,8 +11,8 @@ export default async (client, interaction) => {
 
   let buttonHandler;
   try {
-    const userId = interaction.member ? interaction.member.id : interaction.user.id;
-    console.log(`Handling button ${interaction.customId} by user '${userId}'.`)
+    const user = interaction.member ? interaction.member.user : interaction.user;
+    console.log(`Handling button ${interaction.customId} by user '${user.username}'.`)
 
     const [feature, action, ...rest] = interaction.customId.split(":");
     const featurePath = path.join(__dirname, "..", "..", "features", feature);
