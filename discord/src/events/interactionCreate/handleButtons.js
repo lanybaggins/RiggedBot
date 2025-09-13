@@ -32,6 +32,7 @@ export default async (client, interaction) => {
 
     if (buttonHandler.deferReply) {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      interaction.deferred = true;
     }
     await buttonHandler.callback(client, interaction);
   } catch (error) {

@@ -64,6 +64,7 @@ export default async (client, interaction) => {
     }
     if (commandObject.deferReply) {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      interaction.deferred = true;
     }
     await commandObject.callback(client, interaction);
   } catch (error) {
