@@ -75,11 +75,32 @@ export const command = {
           value: false
         }
       ]
+    },
+    {
+      name: "poisonchalice",
+      description: "Give a crewmate the poison chalice ability",
+      type: ApplicationCommandOptionType.Boolean,
+      choices: [
+        {
+          name: "true",
+          value: true
+        },
+        {
+          name: "false",
+          value: false
+        }
+      ]
     }
   ],
   callback: async (client, interaction) => {
     const author = interaction.user;
     const host = interaction.options.getUser("host");
+    const poisonChalice = interaction.options.getBoolean("poisonchalice") ? true : false;
+    const rollAbilities = interaction.options.getBoolean("rollabilities") ? true : false;
+    if (poisonChalice && rollAbilities) {
+      await interactionReply(interaction, `You cannot roll abilities and have a poison chalice!`);
+      return;
+    }
     let imposterCount = interaction.options.getInteger("imposters");
     if (imposterCount === null) {
       imposterCount = 2;
@@ -114,11 +135,13 @@ export const command = {
         imposter2 = Math.floor(Math.random() * userCount);
       } while (imposter1 === imposter2);
     }
-    let rollAbilities = interaction.options.getBoolean("rollabilities");
-    if (rollAbilities === null) {
-      rollAbilities = false
-    }
     let userSettings = [];
+    let poisonChalicePlayer;
+    if (poisonChalice) {
+      do {
+        poisonChalicePlayer = Math.floor(Math.random() * userCount);
+      } while (poisonChalicePlayer === imposter1 || poisonChalicePlayer === imposter2);
+    }
     do {
       let abilityCount = 0;
       for (let i = 0; i < users.length; i++) {
@@ -141,6 +164,9 @@ export const command = {
               ability = isSolo ? "Confirm Ejection" : "Sheriff";
             }
           }
+        }
+        if (i === poisonChalicePlayer) {
+          ability = "Poison Chalice";
         }
         userSettings.push({
           user: users[i],
@@ -177,6 +203,11 @@ export const command = {
           name: "Roll Abilities",
           value: `${rollAbilities}`,
           inline: true
+        },
+        {
+          name: "Poison Chalice",
+          value: `${poisonChalice}`,
+          inline: true
         }
       ];
       let fields2 = [];
@@ -185,7 +216,7 @@ export const command = {
         const userSetting = userSettings[i];
         fields2.push({
           name: `${user.username}`,
-          value: rollAbilities ? `${userSetting.role} - ${userSetting.ability}` : `${userSetting.role}`,
+          value: rollAbilities || poisonChalice ? `${userSetting.role} - ${userSetting.ability}` : `${userSetting.role}`,
           inline: true,
         });
       }
@@ -228,7 +259,7 @@ export const command = {
         },
         {
           name: "Ability",
-          value: rollAbilities ? `${userSetting.ability}` : "The host will assign abilities.",
+          value: rollAbilities ? userSetting.ability : (i === poisonChalicePlayer ? "Poison Chalice" : "The host will assign abilities."),
           inline: true,
         },
       ];
