@@ -9,7 +9,7 @@ export default async (client, interaction) => {
   let commandObject = undefined;
   try {
     const user = interaction.member ? interaction.member.user : interaction.user;
-    console.log(`Handling button ${interaction.customId} by user '${user.username}'.`)
+    console.log(`Handling command '${interaction.commandName}' by user '${user.username}'.`);
     const userId = user.id
 
     localCommands = await getLocalCommands();
