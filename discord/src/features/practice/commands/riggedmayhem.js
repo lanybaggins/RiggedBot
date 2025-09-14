@@ -57,7 +57,8 @@ export const command = {
   callback: async (client, interaction) => {
     const author = interaction.user;
     const host = interaction.options.getUser("host");
-    if (author.username !== "lanybaggins") {
+    const possibleHosts = ["blitzwarlord", "lanybaggins"];
+    if (!possibleHosts.includes(author.username)) {
       await interactionReply(interaction, `You cannot start this type of game!`);
       return;
     }
