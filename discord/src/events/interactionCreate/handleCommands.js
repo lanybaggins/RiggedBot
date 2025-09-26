@@ -1,6 +1,7 @@
 import { MessageFlags } from "discord.js"
 import getLocalCommands from "../../utils/controller/getLocalCommands.js";
 import interactionReply from "../../utils/discord/interactionReply.js";
+import consoleLog from "../../utils/log/consoleLog.js";
 
 export default async (client, interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -9,7 +10,7 @@ export default async (client, interaction) => {
   let commandObject = undefined;
   try {
     const user = interaction.member ? interaction.member.user : interaction.user;
-    console.log(`Handling command '${interaction.commandName}' by user '${user.username}'.`);
+    consoleLog(`Handling command '${interaction.commandName}' by user '${user.username}'.`);
     const userId = user.id
 
     localCommands = await getLocalCommands();

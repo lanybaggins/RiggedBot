@@ -1,6 +1,7 @@
 import fs from "fs";
 import { MessageFlags } from "discord.js"
 import interactionReply from "../../utils/discord/interactionReply.js";
+import consoleLog from "../../utils/log/consoleLog.js";
 import { fileURLToPath, pathToFileURL } from "url";
 import path from "path";
 const __filename = fileURLToPath(import.meta.url);
@@ -12,7 +13,7 @@ export default async (client, interaction) => {
   let buttonHandler;
   try {
     const user = interaction.member ? interaction.member.user : interaction.user;
-    console.log(`Handling button ${interaction.customId} by user '${user.username}'.`)
+    consoleLog(`Handling button ${interaction.customId} by user '${user.username}'.`);
 
     const [feature, action, ...rest] = interaction.customId.split(":");
     const featurePath = path.join(__dirname, "..", "..", "features", feature);

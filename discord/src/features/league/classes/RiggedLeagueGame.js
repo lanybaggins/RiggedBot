@@ -1,5 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import interactionReply from "../../../utils/discord/interactionReply.js";
+import consoleLog from "../../../utils/log/consoleLog.js";
 const BUTTONID_SIGNUP = "league:announcement:signup";
 const BUTTONID_START = "league:announcement:start";
 const BUTTONID_CANCEL = "league:announcement:cancel";
@@ -68,7 +69,7 @@ export class RiggedLeagueGame {
       (user) => user.username === hostUsername
     );
     if (!host) {
-      console.log(`Host user not found in cache, erroring`);
+      consoleLog(`Host user not found in cache, erroring`);
       await interactionReply(interaction, "Error: Host user not found.");
       return;
     }
@@ -195,7 +196,7 @@ export class RiggedLeagueGame {
     fields[takingSlotIndex].value = `${interaction.user}`;
     this.playerIds.push(`${interaction.user.id}`);
     // check if the game is now full
-    console.log(
+    consoleLog(
       `PlayerCount: ${this.playerCount}, PlayerIds length: ${this.playerIds.length}`
     );
     let gameFull = this.playerIds.length >= this.playerCount;
@@ -230,7 +231,6 @@ export class RiggedLeagueGame {
     let playerResolveError = null;
     let players = [];
     for (const playerId of this.playerIds) {
-      //console.log(`Resolving player ID: ${playerId}`);
       let player = interaction.client.users.cache.get(playerId);
       if (!player) {
         player = await interaction.client.users
@@ -242,7 +242,6 @@ export class RiggedLeagueGame {
         console.error(`Player with ID ${playerId} not found.`);
         return;
       }
-      //console.log(`Resolved player: ${JSON.stringify(player)}`);
       players.push(player);
     }
     if (playerResolveError) {
@@ -316,7 +315,7 @@ export class RiggedLeagueGame {
     let fields = embeds[0].fields;
     let statusField = fields.find((field) => field.name === "Status");
     // check that the user is the host
-    console.log(`Host: ${JSON.stringify(this.host)}`);
+    consoleLog(`Host: ${JSON.stringify(this.host)}`);
     if (this.host.id !== `${interaction.user.id}`) {
       await interactionReply(interaction, "You are not the host of this game.");
       return;
@@ -358,7 +357,7 @@ export class RiggedLeagueGame {
     }
   }
   async sendStartToPlayer(user) {
-    console.log(`Sending start message to player ${user.id}`);
+    consoleLog(`Sending start message to player ${user.id}`);
     let isImposter =
       user.id === this.imposter1.id || user.id === this.imposter2?.id;
     let role = isImposter ? "Imposter" : "Crewmate";
@@ -457,7 +456,7 @@ export class RiggedLeagueGame {
   }
   async sendStartToHost() {
     // send a message to the host with the game details, player roles and credits
-    console.log(`Sending start message to host ${this.host.id}`);
+    consoleLog(`Sending start message to host ${this.host.id}`);
     let embedMain = {
       title: "League Game Started",
       description: `The game has started! Here are the details:`,

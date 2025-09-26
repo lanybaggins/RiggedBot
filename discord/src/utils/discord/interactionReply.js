@@ -1,6 +1,7 @@
 import { MessageFlags } from "discord.js"
+import consoleLog from "../log/consoleLog.js";
 export default async (interaction, content, flags = undefined, options = {}) => {
-  console.log(`Replying to interaction with content: ${content}`);
+  consoleLog(`Replying to interaction with content: ${content}`);
   if (flags === undefined) {
     flags = MessageFlags.Ephemeral
   }
