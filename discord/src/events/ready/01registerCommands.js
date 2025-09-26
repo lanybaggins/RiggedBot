@@ -36,7 +36,7 @@ export default async (client) => {
       } else {
         if (deleteCommand) {
           consoleLog(
-            `⏩ Skipping registering command "${name}" as it's set to delete or not application for this environment.`
+            `⏩ Skipping registering command "${name}" as it's set to delete or not applicable for this environment.`
           );
           continue;
         }
