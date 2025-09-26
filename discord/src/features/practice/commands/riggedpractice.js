@@ -135,6 +135,7 @@ export const command = {
         imposter2 = Math.floor(Math.random() * userCount);
       } while (imposter1 === imposter2);
     }
+    let isSolo = imposter2 === undefined;
     let userSettings = [];
     let vigilantePlayer;
     if (vigilante) {
@@ -237,7 +238,6 @@ export const command = {
         embeds: embeds,
       });
     }
-    let isSolo = imposter2 === undefined;
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
       const userSetting = userSettings[i];
