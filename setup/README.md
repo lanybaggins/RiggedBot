@@ -3,14 +3,8 @@
 1. Install WSL
 2. Install Docker (choose for WSL)
 3. Launch WSL
-4. Create /usr/src/RiggedBot and grant access.  Then copy git folder there.
-```bash
-sudo mkdir /usr/src/RiggedBot
-sudo chown -R $(whoami):$(whoami) /usr/src/RiggedBot
-```
-5. Setup VS Code of WSL remote development.
-4. Follow setup instructions in Linux, but don't set up git pull
-5. IP for pgAdmin on my machine is http://172.19.95.204:8080
+4. Follow setup instructions in Linux.
+5. Setup VS Code for WSL remote development.
 
 # Linux setup
 
@@ -58,11 +52,12 @@ sudo docker run hello-world
 # Set up docker compose
 cd /usr/src/RiggedBot/docker
 nano .env
-# Paste the following
+# Paste the following.  Change the passwords.  Set prod to dev if running in development.
 : '
 COMPOSE_PROFILES=prod
 COMPOSE_PROJECT_NAME=riggedbot
-POSTGRES_PASSWORD=change-me
+POSTGRES_PASSWORD=mysecretpassword
+PGADMIN_DEFAULT_PASSWORD=mysecretpassword
 '
 
 # Set up Discord API key
@@ -72,25 +67,35 @@ TOKEN = MYKEYHERE
 '
 
 # run docker compose
+cd /usr/src/RiggedBot/docker
 sudo docker compose up --detach --wait
+
+# view running containers
 docker compose ps
+
 # view the logs
+cd /usr/src/RiggedBot/docker
 docker logs -f riggedbot-riggedbotapp-1
 
 ```
 
 # Database
 
-1. For production, connect over SSH tunnel
-``` powershell
-& ssh -i "$env:documents\Source\Oracle Keys\ssh-key-2025-08-13.key" -L 8081:localhost:8081 ubuntu@my.ip.add.ress
-```
-TIP: Add that tunnel to SecureCRT for easier use in the future
-2. Go to pgAdmin in your browser.
-  Dev: http://172.19.95.204:8080 (use ifconfig to determine WSL IP)
-  Production: http://localhost:8081
+1. Add a port forwarding setting in SecureCRT connection for connecting to the remote db.  Local port 5433; remote port 5432.
+2. Go to the dev pgAdmin in your browser. http://172.19.95.204:8081 (use ifconfig to determine WSL IP)
 3. Log into pgAdmin
-4. Add the server.  Register -> Server.  Add a name.  Connection host name is "db".
+4. Add the dev server.  Register -> Server.
+* Name:              riggedbotdev
+* Host name/address: db
+* Port:              5432
+* Username:          admin
+* Password:          password saved in docker/.env
+5. Add the prod server.  Register -> Server.
+* Name:              riggedbot
+* Host name/address: localhost
+* Port:              5453
+* Username:          admin
+* Password:          password saved in docker/.env
 5. Create a new database named "riggedbot".
 
 

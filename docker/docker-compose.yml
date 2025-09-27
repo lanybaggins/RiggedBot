@@ -1,5 +1,6 @@
 volumes:
   database:
+  pgadmin-data:
 
 services:
   db:
@@ -7,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: riggedbot
     ports: ["5432:5432"]
     healthcheck:
@@ -18,15 +19,18 @@ services:
     volumes:
       - database:/var/lib/postgresql/data
   pgadmin:
+    profiles: ["dev"]
     image: dpage/pgadmin4
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@email.com
-      PGADMIN_DEFAULT_PASSWORD: mysecretpassword
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports: ["8081:80"]
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
   riggedbotapp:
     profiles: ["prod"]
     build:
