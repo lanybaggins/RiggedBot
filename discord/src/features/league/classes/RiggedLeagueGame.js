@@ -123,6 +123,13 @@ export class RiggedLeagueGame {
       ],
       timestamp: new Date().toISOString(),
     };
+    if (this.startTime !== null) {
+      embed.fields.push({
+        name: "Start Time",
+        value: this.startTime,
+        inline: true,
+      });
+    }
     for (let i = 1; i <= this.playerCount; i++) {
       embed.fields.push({
         name: `Player ${i}`,

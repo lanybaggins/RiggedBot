@@ -28,8 +28,14 @@ export const command = {
           value: 6,
         }
       ],
+
       required: false,
-    }
+    },
+    {
+      name: "starttime",
+      description: "Preschedule game start.  Enter in UTC time format: YYYY-MM-DD HH:MM",
+      type: ApplicationCommandOptionType.String,
+    },
   ],
   callback: async (client, interaction) => {
     const guildId = interaction.guildId;
@@ -62,6 +68,21 @@ export const command = {
     playerCount = playerCount ? playerCount : 6;
     let imposterCount = 2;
     let game = new RiggedLeagueGame();
+    let startTime = interaction.options.getString("starttime");
+    game.startTime = null;
+    if (startTime) {
+      const parsedTime = Date.parse(startTime + " UTC");
+      if (isNaN(parsedTime)) {
+        await interactionReply(interaction, `The start time format is invalid! Please use the format: YYYY-MM-DD HH:MM in UTC time.`);
+        return;
+      }
+      const now = new Date();
+      if (parsedTime < now.getTime()) {
+        await interactionReply(interaction, `The start time must be in the future!`);
+        return;
+      }
+      game.startTime = new Date(parsedTime);
+    }
     game.sendAnnouncement(channel, gameId, host, playerCount, imposterCount);
     await interactionReply(interaction, `Command ran successfully! A new league game has been announced in ${channel}.`);
   },
