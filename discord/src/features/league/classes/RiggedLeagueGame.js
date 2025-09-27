@@ -131,9 +131,11 @@ export class RiggedLeagueGame {
       timestamp: new Date().toISOString(),
     };
     if (this.startTime !== null) {
+      // convert to <t:UnixTimestamp:F> format
+      const unixTimestamp = Math.floor(this.startTime.getTime() / 1000);
       embed.fields.push({
         name: "Start Time",
-        value: this.startTime,
+        value: `<t:${unixTimestamp}:F>`,
         inline: true,
       });
     }
