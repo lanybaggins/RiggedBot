@@ -485,7 +485,8 @@ export class RiggedLeagueGame {
     }
     let embed = {
       title:
-        "If you have credits you can purchase them using the buttons below.",
+        //"If you have credits you can purchase them using the buttons below.",
+        "Game host will send you a DM with your abilities.",
       description: `You have been chosen to be ${role}.`,
       fields: fields,
       timestamp: new Date().toISOString(),
