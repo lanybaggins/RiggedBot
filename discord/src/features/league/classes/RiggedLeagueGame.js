@@ -2,6 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import interactionReply from "../../../utils/discord/interactionReply.js";
 import consoleLog from "../../../utils/log/consoleLog.js";
 const BUTTONID_SIGNUP = "league:announcement:signup";
+const BUTTONID_SIGNUPCANCEL = "league:announcement:cancelSignup";
 const BUTTONID_START = "league:announcement:start";
 const BUTTONID_CANCEL = "league:announcement:cancel";
 const BUTTONID_BUY_SABOTAGECOMMS = "league:buy:sabotageComms";
@@ -88,6 +89,12 @@ export class RiggedLeagueGame {
       )
       .addComponents(
         new ButtonBuilder()
+          .setCustomId(BUTTONID_SIGNUPCANCEL)
+          .setLabel("Cancel Sign Up")
+          .setStyle(ButtonStyle.Danger)
+      )
+      .addComponents(
+        new ButtonBuilder()
           .setCustomId(BUTTONID_CANCEL)
           .setLabel("Cancel")
           .setStyle(ButtonStyle.Danger)
@@ -158,6 +165,8 @@ export class RiggedLeagueGame {
     const customId = interaction.customId;
     if (customId === BUTTONID_SIGNUP) {
       this.signup(interaction);
+    } else if (customId === BUTTONID_SIGNUPCANCEL) {
+      this.signupCancel(interaction);
     } else if (customId === BUTTONID_START) {
       this.start(interaction);
     } else if (customId === BUTTONID_CANCEL) {
@@ -217,6 +226,12 @@ export class RiggedLeagueGame {
         )
         .addComponents(
           new ButtonBuilder()
+            .setCustomId(BUTTONID_SIGNUPCANCEL)
+            .setLabel("Cancel Sign Up")
+            .setStyle(ButtonStyle.Danger)
+        )
+        .addComponents(
+          new ButtonBuilder()
             .setCustomId(BUTTONID_CANCEL)
             .setLabel("Cancel")
             .setStyle(ButtonStyle.Danger)
@@ -231,6 +246,67 @@ export class RiggedLeagueGame {
     await interactionReply(interaction, `You have signed up for the game!`);
     if (gameFull) {
       await this.host.send(`Game ID ${this.gameId} is ready to start!`);
+    }
+  }
+  async signupCancel(interaction) {
+    await this.initFromAnnouncement(interaction)
+    const message = interaction.message;
+    let embeds = message.embeds;
+    const fields = embeds[0].fields;
+    let statusField = fields.find((field) => field.name === "Status");
+    let components = message.components;
+
+    // check that the user is signed up
+    const alreadySignedUp = this.playerIds.includes(`${interaction.user.id}`);
+    if (!alreadySignedUp) {
+      await interactionReply(interaction, "You are not signed up for this game.");
+      return;
+    }
+    // find the slot the user is in
+    const userSlot = fields.find(
+      (field) =>
+        field.name.startsWith("Player") &&
+        field.name !== "Player Count" &&
+        field.value === `${interaction.user}`
+    );
+    const userSlotIndex = fields.indexOf(userSlot);
+    fields[userSlotIndex].value = "open";
+    this.playerIds = this.playerIds.filter(
+      (id) => id !== `${interaction.user.id}`
+    );
+    // if the game was full, change it back to setup
+    const oldStatus = statusField.value
+    if (oldStatus === "Ready") {
+      let row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId(BUTTONID_SIGNUP)
+            .setLabel("Sign Up")
+            .setStyle(ButtonStyle.Primary)
+        )
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId(BUTTONID_SIGNUPCANCEL)
+            .setLabel("Cancel Sign Up")
+            .setStyle(ButtonStyle.Danger)
+        )
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId(BUTTONID_CANCEL)
+            .setLabel("Cancel")
+            .setStyle(ButtonStyle.Danger)
+        );
+      components[0] = row;
+      statusField.value = "Setup";
+    }
+    message.edit({
+      embeds: embeds,
+      components: components,
+    });
+    await interactionReply(interaction, `You have cancelled your sign up for the game.`);
+    // notify the host if the game was ready
+    if (oldStatus === "Ready") {
+      await this.host.send(`Player ${interaction.user.username} has cancelled their sign up for game ID ${this.gameId}. The game is no longer ready to start.`);
     }
   }
   async resolvePlayerIds(interaction) {
