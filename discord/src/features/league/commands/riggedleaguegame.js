@@ -83,7 +83,7 @@ export const command = {
       }
       game.startTime = new Date(parsedTime);
     }
-    game.sendAnnouncement(channel, gameId, host, playerCount, imposterCount);
+    await game.sendAnnouncement(channel, gameId, host, playerCount, imposterCount);
     await interactionReply(interaction, `Command ran successfully! A new league game has been announced in ${channel}.`);
   },
 };
