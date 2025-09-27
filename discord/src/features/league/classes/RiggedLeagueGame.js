@@ -11,22 +11,21 @@ const BUTTONID_BUY_CONFIRMEJECTION = "league:buy:confirmEjection";
 const BUTTONID_BUY_SHERIFF = "league:buy:Sheriff";
 
 export class RiggedLeagueGame {
-  async initFromAnnouncement(interaction) {
-    let message = interaction.message;
+  async initFromAnnouncement() {
+    let message = this.interaction.message;
     let embeds = message.embeds;
+    this.timestamp = new Date(embeds[0].timestamp);
     const fields = embeds[0].fields;
-
     const hostField = fields.find((field) => field.name === "Host");
     // convert hostIdString to a user object
     const hostIdString = hostField.value;
     const hostId = hostIdString.replace(/<@!?(\d+)>/, "$1");
-    let host = await interaction.client.users.cache.get(hostId);
+    let host = await this.client.users.cache.get(hostId);
     if (!host) {
-      host = interaction.client.users.fetch(hostId).catch(() => null);
+      host = this.client.users.fetch(hostId).catch(() => null);
     }
     if (!host) {
       throw new Error("Host user not found.");
-      return;
     }
     this.host = host;
 
@@ -59,19 +58,20 @@ export class RiggedLeagueGame {
       this.playerIds.push(playerId);
     }
   }
-  async initFromPlayerDM(interaction) {
-    let message = interaction.message;
+  async initFromPlayerDM() {
+    let message = this.interaction.message;
     let embeds = message.embeds;
+    this.timestamp = new Date(embeds[0].timestamp);
     const fields = embeds[0].fields;
     const hostField = fields.find((field) => field.name === "Host");
     // convert hostField Username to a user object
     const hostUsername = hostField.value;
-    let host = interaction.client.users.cache.find(
+    let host = this.client.users.cache.find(
       (user) => user.username === hostUsername
     );
     if (!host) {
       consoleLog(`Host user not found in cache, erroring`);
-      await interactionReply(interaction, "Error: Host user not found.");
+      await interactionReply(this.interaction, "Error: Host user not found.");
       return;
     }
     this.host = host;
@@ -79,26 +79,129 @@ export class RiggedLeagueGame {
     const gameIdField = fields.find((field) => field.name === "Game ID");
     this.gameId = gameIdField.value;
   }
-  buildAnnouncement() {
-    let row = new ActionRowBuilder()
-      .addComponents(
+  async handleCommand(client, interaction) {
+    this.interactionType = 'command';
+    this.client = client;
+    this.interaction = interaction;
+    this.timestamp = new Date();
+    // check if league commands are enabled on this server and if the user has the staff role
+    const guildId = this.interaction.guildId;
+    const guildSettings = this.client.config.guilds.find((g) => g.guildId === guildId);
+    if (!guildSettings || !(guildSettings?.leagueChannelId)) {
+      await interactionReply(this.interaction, "League commands are not enabled on this server.");
+      return;
+    }
+    if (!this.interaction.member.roles.cache.has(guildSettings.staffRoleId)) {
+      await interactionReply(this.interaction, "You do not have permission to run this command.");
+      return;
+    }
+    const channelId = guildSettings.leagueChannelId;
+    let channel = this.client.channels.cache.get(channelId);
+    if (!channel) {
+      channel = await this.client.channels.fetch(channelId);
+    }
+    if (!channel) {
+      await interactionReply(this.interaction, "League channel not found.");
+      return;
+    }
+    this.gameId = this.interaction.id;
+    this.host = this.interaction.options.getUser("host") ?? this.interaction.user;
+    if (this.host.bot) {
+      await interactionReply(this.interaction, `You cannot specify a bot as the host!`);
+      return;
+    }
+    this.playerCount = this.interaction.options.getInteger("players") ?? 6;
+    this.imposterCount = 2;
+    let startTime = this.interaction.options.getString("starttime");
+    this.startTime = null;
+    if (startTime) {
+      const parsedTime = Date.parse(startTime + " UTC");
+      if (isNaN(parsedTime)) {
+        await interactionReply(this.interaction, `The start time format is invalid! Please use the format: YYYY-MM-DD HH:MM in UTC time.`);
+        return;
+      }
+      const now = new Date();
+      if (parsedTime < now.getTime()) {
+        await interactionReply(this.interaction, `The start time must be in the future!`);
+        return;
+      }
+      this.startTime = new Date(parsedTime);
+    }
+    this.playerIds = [];
+    this.status = "Setup";
+    const newButtons = await this.announcementBuildButtons();
+    const newEmbeds = await this.announcementBuildEmbed();
+    const message = {
+      content: "A new league game has been announced!",
+      embeds: [newEmbeds],
+      components: [newButtons],
+    };
+    await channel.send(message);
+    await interactionReply(this.interaction, `Command ran successfully! A new league game has been announced in ${channel}.`);
+  }
+  async handleButton(client, interaction) {
+    this.interactionType = 'button';
+    this.client = client;
+    this.interaction = interaction;
+    const customId = this.interaction.customId;
+    if (customId === BUTTONID_SIGNUP) {
+      this.signup();
+    } else if (customId === BUTTONID_SIGNUPCANCEL) {
+      this.signupCancel();
+    } else if (customId === BUTTONID_GAMESTART) {
+      this.gameStart();
+    } else if (customId === BUTTONID_GAMECANCEL) {
+      this.gameCancel();
+    } else if (customId.startsWith("leaguegame_buy_")) {
+      this.buyAbility();
+    } else {
+      await interactionReply(this.interaction, "Unknown button interaction");
+    }
+  }
+  async announcementBuildButtons() {
+    let buttons = new ActionRowBuilder()
+    const allowSignup = this.status === "Setup" && this.playerIds.length <= this.playerCount;
+    const allowSignupCancel = this.status === "Setup" || this.status === "Ready";
+    const allowGameStart = this.status === "Ready";
+    const allowGameCancel = this.status === "Setup" || this.status === "Ready";
+    if (allowSignup) {
+      buttons.addComponents(
         new ButtonBuilder()
           .setCustomId(BUTTONID_SIGNUP)
           .setLabel("Sign Up")
           .setStyle(ButtonStyle.Primary)
       )
-      .addComponents(
+    }
+    if (allowSignupCancel) {
+      buttons.addComponents(
         new ButtonBuilder()
           .setCustomId(BUTTONID_SIGNUPCANCEL)
           .setLabel("Cancel Sign Up")
           .setStyle(ButtonStyle.Danger)
       )
-      .addComponents(
+    }
+    if (allowGameStart) {
+      buttons.addComponents(
+        new ButtonBuilder()
+          .setCustomId(BUTTONID_GAMESTART)
+          .setLabel("Start Game")
+          .setStyle(ButtonStyle.Primary)
+      )
+    }
+    if (allowGameCancel) {
+      buttons.addComponents(
         new ButtonBuilder()
           .setCustomId(BUTTONID_GAMECANCEL)
           .setLabel("Cancel Game")
           .setStyle(ButtonStyle.Danger)
-      );
+      )
+    }
+    if (buttons.components.length === 0) {
+      buttons = null;
+    }
+    return buttons;
+  }
+  async announcementBuildEmbed() {
     let embed = {
       title: "Rigged Caps - League Game Starting Soon",
       description: "Sign up for this league game by clicking the button below.",
@@ -128,9 +231,9 @@ export class RiggedLeagueGame {
           value: this.status,
         },
       ],
-      timestamp: new Date().toISOString(),
+      timestamp: this.timestamp.toISOString(),
     };
-    if (this.startTime !== null) {
+    if (this.startTime != null) {
       // convert to <t:UnixTimestamp:F> format
       const unixTimestamp = Math.floor(this.startTime.getTime() / 1000);
       embed.fields.push({
@@ -138,229 +241,146 @@ export class RiggedLeagueGame {
         value: `<t:${unixTimestamp}:F>`,
       });
     }
+    await this.resolvePlayerIds();
     for (let i = 1; i <= this.playerCount; i++) {
-      embed.fields.push({
+      let playerField = {
         name: `Player ${i}`,
-        value: "open",
+        value: this.players[i - 1] ? `${this.players[i - 1]}` : "open",
         inline: true,
-      });
+      };
+      embed.fields.push(playerField);
     }
-    const r = {
-      content: "A new league game has been announced!",
-      embeds: [embed],
-      components: [row],
-    };
-    return r;
+    return embed;
   }
-  async sendAnnouncement(channel, gameId, host, playerCount, imposterCount) {
-    this.gameId = gameId;
-    this.host = host;
-    this.playerCount = playerCount;
-    this.imposterCount = imposterCount;
-    this.players = [];
-    this.status = "Setup";
-    const r = this.buildAnnouncement();
-    await channel.send(r);
-  }
-  async handleButton(client, interaction) {
-    const customId = interaction.customId;
-    if (customId === BUTTONID_SIGNUP) {
-      this.signup(interaction);
-    } else if (customId === BUTTONID_SIGNUPCANCEL) {
-      this.signupCancel(interaction);
-    } else if (customId === BUTTONID_GAMESTART) {
-      this.start(interaction);
-    } else if (customId === BUTTONID_GAMECANCEL) {
-      this.cancel(interaction);
-    } else if (customId.startsWith("leaguegame_buy_")) {
-      this.buyAbility(interaction);
-    } else {
-      await interactionReply(interaction, "Unknown button interaction");
-    }
-  }
-  async signup(interaction) {
-    await this.initFromAnnouncement(interaction)
-    const message = interaction.message;
+  async signup() {
+    await this.initFromAnnouncement()
+    const message = this.interaction.message;
     let embeds = message.embeds;
     const fields = embeds[0].fields;
-    let statusField = fields.find((field) => field.name === "Status");
-    let components = message.components;
 
     // check that the user isn't the host
-    if (this.host.id === `${interaction.user.id}`) {
-      await interactionReply(interaction, "You are the host of this game and cannot sign up as a player.");
+    // allow the host to sign up as a player (multiple times) in dev environment for testing if this is dev and they are a developer
+    const isDev = this.client.config.devs.includes(this.interaction.user.id);
+    const isProduction = this.client.config.isProduction;
+    if (this.host.id === `${this.interaction.user.id}` && isProduction && !isDev) {
+      await interactionReply(this.interaction, "You are the host of this game and cannot sign up as a player.");
       return;
     }
     // check that user is not already signed up
-    const alreadySignedUp = this.playerIds.includes(`${interaction.user.id}`);
-    if (alreadySignedUp) {
-      await interactionReply(interaction, "You are already signed up for this game.");
+    const alreadySignedUp = this.playerIds.includes(`${this.interaction.user.id}`);
+    if (alreadySignedUp && isProduction && !isDev) {
+      await interactionReply(this.interaction, "You are already signed up for this game.");
       return;
     }
+    // check that the game is in setup status
+    if (this.status !== "Setup") {
+      await interactionReply(this.interaction, "This game is not in a state that allows signing up.");
+      return;
+    }
+    // check that there is an open slot
     if (this.playerIds.length >= this.playerCount) {
-      await interactionReply(interaction, "No open slots available.");
+      await interactionReply(this.interaction, "No open slots available.");
       return;
     }
-    // find an open slot
-    const openSlots = fields.filter(
-      (field) =>
-        field.name.startsWith("Player") &&
-        field.name !== "Player Count" &&
-        field.value === "open"
-    );
-    const takingSlot = openSlots[0];
-    const takingSlotIndex = fields.indexOf(takingSlot);
-    fields[takingSlotIndex].value = `${interaction.user}`;
-    this.playerIds.push(`${interaction.user.id}`);
+    // Register the user as a player
+    this.playerIds.push(`${this.interaction.user.id}`);
     // check if the game is now full
-    consoleLog(
-      `PlayerCount: ${this.playerCount}, PlayerIds length: ${this.playerIds.length}`
-    );
     let gameFull = this.playerIds.length >= this.playerCount;
     if (gameFull) {
-      let row = new ActionRowBuilder()
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId(BUTTONID_GAMESTART)
-            .setLabel("Start Game")
-            .setStyle(ButtonStyle.Primary)
-        )
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId(BUTTONID_SIGNUPCANCEL)
-            .setLabel("Cancel Sign Up")
-            .setStyle(ButtonStyle.Danger)
-        )
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId(BUTTONID_GAMECANCEL)
-            .setLabel("Cancel Game")
-            .setStyle(ButtonStyle.Danger)
-        );
-      components[0] = row;
-      statusField.value = "Ready";
+      this.status = "Ready";
     }
+    const newButtons = await this.announcementBuildButtons();
+    const newEmbeds = await this.announcementBuildEmbed();
     message.edit({
-      embeds: embeds,
-      components: components,
+      embeds: [newEmbeds],
+      components: [newButtons],
     });
-    await interactionReply(interaction, `You have signed up for the game!`);
+    await interactionReply(this.interaction, `You have signed up for the game!`);
     if (gameFull) {
       await this.host.send(`Game ID ${this.gameId} is ready to start!`);
     }
   }
-  async signupCancel(interaction) {
-    await this.initFromAnnouncement(interaction)
-    const message = interaction.message;
-    let embeds = message.embeds;
-    const fields = embeds[0].fields;
-    let statusField = fields.find((field) => field.name === "Status");
-    let components = message.components;
-
-    // check that the user is signed up
-    const alreadySignedUp = this.playerIds.includes(`${interaction.user.id}`);
+  async signupCancel() {
+    await this.initFromAnnouncement()
+    const message = this.interaction.message;
+    // User must be signed up to cancel
+    const alreadySignedUp = this.playerIds.includes(`${this.interaction.user.id}`);
     if (!alreadySignedUp) {
-      await interactionReply(interaction, "You are not signed up for this game.");
+      await interactionReply(this.interaction, "You are not signed up for this game.");
       return;
     }
-    // find the slot the user is in
-    const userSlot = fields.find(
-      (field) =>
-        field.name.startsWith("Player") &&
-        field.name !== "Player Count" &&
-        field.value === `${interaction.user}`
-    );
-    const userSlotIndex = fields.indexOf(userSlot);
-    fields[userSlotIndex].value = "open";
+    // game must be in setup or ready status
+    if (this.status !== "Setup" && this.status !== "Ready") {
+      await interactionReply(this.interaction, "This game is not in a state that allows cancelling sign up.");
+      return;
+    }
+    // Remove the user from the playerIds array and free up their slot
     this.playerIds = this.playerIds.filter(
-      (id) => id !== `${interaction.user.id}`
+      (id) => id !== `${this.interaction.user.id}`
     );
     // if the game was full, change it back to setup
-    const oldStatus = statusField.value
-    if (oldStatus === "Ready") {
-      let row = new ActionRowBuilder()
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId(BUTTONID_SIGNUP)
-            .setLabel("Sign Up")
-            .setStyle(ButtonStyle.Primary)
-        )
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId(BUTTONID_SIGNUPCANCEL)
-            .setLabel("Cancel Sign Up")
-            .setStyle(ButtonStyle.Danger)
-        )
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId(BUTTONID_GAMECANCEL)
-            .setLabel("Cancel Game")
-            .setStyle(ButtonStyle.Danger)
-        );
-      components[0] = row;
-      statusField.value = "Setup";
-    }
+    const oldStatus = this.status;
+    this.status = "Setup";
+    // update the announcement
+    const newButtons = await this.announcementBuildButtons();
+    const newEmbeds = await this.announcementBuildEmbed();
     message.edit({
-      embeds: embeds,
-      components: components,
+      embeds: [newEmbeds],
+      components: [newButtons],
     });
-    await interactionReply(interaction, `You have cancelled your sign up for the game.`);
     // notify the host if the game was ready
     if (oldStatus === "Ready") {
-      await this.host.send(`Player ${interaction.user.username} has cancelled their sign up for game ID ${this.gameId}. The game is no longer ready to start.`);
+      await this.host.send(`Player ${this.interaction.user.username} has cancelled their sign up for game ID ${this.gameId}. The game is no longer ready to start.`);
     }
+    await interactionReply(this.interaction, `You have cancelled your sign up for the game.`);
   }
-  async resolvePlayerIds(interaction) {
+  async resolvePlayerIds() {
     // resolve the playerIds to user objects
     let playerResolveError = null;
     let players = [];
     for (const playerId of this.playerIds) {
-      let player = interaction.client.users.cache.get(playerId);
+      let player = this.client.users.cache.get(playerId);
       if (!player) {
-        player = await interaction.client.users
+        player = await this.client.users
           .fetch(playerId)
           .catch(() => null);
       }
       if (!player) {
         playerResolveError = playerId;
         console.error(`Player with ID ${playerId} not found.`);
-        return;
+        break;
       }
       players.push(player);
     }
     if (playerResolveError) {
-      await interactionReply(interaction, `Error resolving player with ID ${playerResolveError}. Please try again later.`);
-      return;
+      await interactionReply(this.interaction, `Error resolving player with ID ${playerResolveError}. Please try again later.`);
+      throw new Error(`Player with ID ${playerResolveError} not found.`);
     }
     this.players = players;
   }
-  async start(interaction) {
-    await this.initFromAnnouncement(interaction)
-    const message = interaction.message;
+  async gameStart() {
+    await this.initFromAnnouncement()
+    const message = this.interaction.message;
     let embeds = message.embeds;
     const fields = embeds[0].fields;
     let statusField = fields.find((field) => field.name === "Status");
     // check that the user is the host
-    if (this.host.id !== `${interaction.user.id}`) {
-      await interactionReply(interaction, "You are not the host of this game.");
+    if (this.host.id !== `${this.interaction.user.id}`) {
+      await interactionReply(this.interaction, "You are not the host of this game.");
       return;
     }
     // check that the game is not already cancelled or started
     if (this.status !== "Ready") {
-      await interactionReply(interaction, "This game is not ready to start or already started.");
+      await interactionReply(this.interaction, "This game is not ready to start or already started.");
       return;
     }
     // check that the game is full
     if (this.playerIds.length < this.playerCount) {
-      await interactionReply(interaction, "This game is not full yet.");
+      await interactionReply(this.interaction, "This game is not full yet.");
       return;
     }
-    // resolve the playerIds to user objects
-    await this.resolvePlayerIds(interaction).catch(async (error) => {
-      await interactionReply(interaction, "Error resolving player IDs: " + error.message);
-      console.error("Error resolving player IDs:", error);
-      return;
-    });
+    // resolve the playerIds to user objects (this.players)
+    await this.resolvePlayerIds();
     // roll one or two players to be imposters randomly, this.imposterCount
     let imposter1 = Math.floor(Math.random() * this.playerIds.length);
     let imposter2;
@@ -390,23 +410,22 @@ export class RiggedLeagueGame {
       components: [],
     });
     // reply
-    await interactionReply(interaction, "The game has started! Players have been notified.");
+    await interactionReply(this.interaction, "The game has started! Players have been notified.");
   }
-  async cancel(interaction) {
-    await this.initFromAnnouncement(interaction)
-    const message = interaction.message;
+  async gameCancel() {
+    await this.initFromAnnouncement()
+    const message = this.interaction.message;
     let embeds = message.embeds;
     let fields = embeds[0].fields;
     let statusField = fields.find((field) => field.name === "Status");
     // check that the user is the host
-    consoleLog(`Host: ${JSON.stringify(this.host)}`);
-    if (this.host.id !== `${interaction.user.id}`) {
-      await interactionReply(interaction, "You are not the host of this game.");
+    if (this.host.id !== `${this.interaction.user.id}`) {
+      await interactionReply(this.interaction, "You are not the host of this game.");
       return;
     }
     // check that the game is not already cancelled or started
     if (this.status !== "Ready" && this.status !== "Setup") {
-      await interactionReply(interaction, "This game is not in a state that can be cancelled.");
+      await interactionReply(this.interaction, "This game is not in a state that can be cancelled.");
       return;
     }
     // update the embed
@@ -417,7 +436,7 @@ export class RiggedLeagueGame {
       components: [],
     });
     // reply
-    await interactionReply(interaction, "The game has been cancelled.");
+    await interactionReply(this.interaction, "The game has been cancelled.");
   }
   rollCredits() {
     // temporary solution to roll credits for players
@@ -603,10 +622,10 @@ export class RiggedLeagueGame {
       components: components,
     });
   }
-  async buyAbility(interaction) {
-    await this.initFromPlayerDM(interaction)
+  async buyAbility() {
+    await this.initFromPlayerDM()
     // get credits from fields
-    let message = interaction.message;
+    let message = this.interaction.message;
     let embeds = message.embeds;
     const fields = embeds[0].fields;
     let creditsField = fields.find(
@@ -617,38 +636,38 @@ export class RiggedLeagueGame {
     let abilityCost = 0;
     let ability = "unknown";
     if (
-      interaction.customId === BUTTONID_BUY_SABOTAGECOMMS
+      this.interaction.customId === BUTTONID_BUY_SABOTAGECOMMS
     ) {
       abilityCost = 250;
       ability = "Sabotage Comms";
     } else if (
-      interaction.customId === BUTTONID_BUY_ASSASSINATE
+      this.interaction.customId === BUTTONID_BUY_ASSASSINATE
     ) {
       abilityCost = 500;
       ability = "Assassinate";
     } else if (
-      interaction.customId === BUTTONID_BUY_CONFIRMEJECTION
+      this.interaction.customId === BUTTONID_BUY_CONFIRMEJECTION
     ) {
       abilityCost = 250;
       ability = "Confirm Ejection";
     } else if (
-      interaction.customId === BUTTONID_BUY_SHERIFF
+      this.interaction.customId === BUTTONID_BUY_SHERIFF
     ) {
       abilityCost = 500;
       ability = "Sheriff";
     } else {
-      await interactionReply(interaction, "Unknown ability.");
+      await interactionReply(this.interaction, "Unknown ability.");
       return;
     }
     // check if user has enough credits
     if (credits < abilityCost) {
-      await interactionReply(interaction, `You do not have enough credits to buy ${ability}.`);
+      await interactionReply(this.interaction, `You do not have enough credits to buy ${ability}.`);
       return;
     }
     credits -= abilityCost;
     // send the host a DM
     await this.host.send(
-      `${interaction.user.username} has purchased ${ability} for ${abilityCost} credits in game ID ${this.gameId}.`
+      `${this.interaction.user.username} has purchased ${ability} for ${abilityCost} credits in game ID ${this.gameId}.`
     );
     creditsField.value = `${credits}`;
     // update the embed, remove components
@@ -657,6 +676,6 @@ export class RiggedLeagueGame {
       components: [],
     });
     // reply to the user
-    await interactionReply(interaction, `You have purchased ${ability} for ${abilityCost} credits.`);
+    await interactionReply(this.interaction, `You have purchased ${ability} for ${abilityCost} credits.`);
   }
 }
