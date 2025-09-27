@@ -427,6 +427,7 @@ export class RiggedLeagueGame {
     for (const playerId of this.playerIds) {
       let random = Math.floor(Math.random() * 100) + 1; // random credits between 1 and 100
       let credits;
+      random = 100; // don't use the credit system at the moment. Just give everyone 0 credits.
       if (random <= 20) {
         credits = 500; // 1/5 chance
       } else if (random <= 60) {
