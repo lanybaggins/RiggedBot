@@ -2,9 +2,9 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import interactionReply from "../../../utils/discord/interactionReply.js";
 import consoleLog from "../../../utils/log/consoleLog.js";
 const BUTTONID_SIGNUP = "league:announcement:signup";
-const BUTTONID_SIGNUPCANCEL = "league:announcement:cancelSignup";
-const BUTTONID_START = "league:announcement:start";
-const BUTTONID_CANCEL = "league:announcement:cancel";
+const BUTTONID_SIGNUPCANCEL = "league:announcement:signupCancel";
+const BUTTONID_GAMESTART = "league:announcement:gamestart";
+const BUTTONID_GAMECANCEL = "league:announcement:gamecancel";
 const BUTTONID_BUY_SABOTAGECOMMS = "league:buy:sabotageComms";
 const BUTTONID_BUY_ASSASSINATE = "league:buy:assassinate";
 const BUTTONID_BUY_CONFIRMEJECTION = "league:buy:confirmEjection";
@@ -95,8 +95,8 @@ export class RiggedLeagueGame {
       )
       .addComponents(
         new ButtonBuilder()
-          .setCustomId(BUTTONID_CANCEL)
-          .setLabel("Cancel")
+          .setCustomId(BUTTONID_GAMECANCEL)
+          .setLabel("Cancel Game")
           .setStyle(ButtonStyle.Danger)
       );
     let embed = {
@@ -167,9 +167,9 @@ export class RiggedLeagueGame {
       this.signup(interaction);
     } else if (customId === BUTTONID_SIGNUPCANCEL) {
       this.signupCancel(interaction);
-    } else if (customId === BUTTONID_START) {
+    } else if (customId === BUTTONID_GAMESTART) {
       this.start(interaction);
-    } else if (customId === BUTTONID_CANCEL) {
+    } else if (customId === BUTTONID_GAMECANCEL) {
       this.cancel(interaction);
     } else if (customId.startsWith("leaguegame_buy_")) {
       this.buyAbility(interaction);
@@ -220,7 +220,7 @@ export class RiggedLeagueGame {
       let row = new ActionRowBuilder()
         .addComponents(
           new ButtonBuilder()
-            .setCustomId(BUTTONID_START)
+            .setCustomId(BUTTONID_GAMESTART)
             .setLabel("Start Game")
             .setStyle(ButtonStyle.Primary)
         )
@@ -232,8 +232,8 @@ export class RiggedLeagueGame {
         )
         .addComponents(
           new ButtonBuilder()
-            .setCustomId(BUTTONID_CANCEL)
-            .setLabel("Cancel")
+            .setCustomId(BUTTONID_GAMECANCEL)
+            .setLabel("Cancel Game")
             .setStyle(ButtonStyle.Danger)
         );
       components[0] = row;
@@ -292,8 +292,8 @@ export class RiggedLeagueGame {
         )
         .addComponents(
           new ButtonBuilder()
-            .setCustomId(BUTTONID_CANCEL)
-            .setLabel("Cancel")
+            .setCustomId(BUTTONID_GAMECANCEL)
+            .setLabel("Cancel Game")
             .setStyle(ButtonStyle.Danger)
         );
       components[0] = row;
