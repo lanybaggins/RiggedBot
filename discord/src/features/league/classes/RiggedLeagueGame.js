@@ -136,7 +136,6 @@ export class RiggedLeagueGame {
       embed.fields.push({
         name: "Start Time",
         value: `<t:${unixTimestamp}:F>`,
-        inline: true,
       });
     }
     for (let i = 1; i <= this.playerCount; i++) {
