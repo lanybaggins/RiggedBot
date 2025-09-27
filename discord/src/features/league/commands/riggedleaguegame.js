@@ -6,7 +6,7 @@ export const command = {
   name: "riggedleaguegame",
   description: "Announces a game of Rigged Caps with league settings.",
   serverOnly: true,
-  devEnvironmentOnly: true,
+  devEnvironmentOnly: false,
   deferReply: true,
   options: [
     {
