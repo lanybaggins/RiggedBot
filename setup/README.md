@@ -92,8 +92,8 @@ docker logs -f riggedbot-riggedbotapp-1
 * Password:          password saved in docker/.env
 5. Add the prod server.  Register -> Server.
 * Name:              riggedbot
-* Host name/address: localhost
-* Port:              5453
+* Host name/address: host.docker.internal
+* Port:              5433
 * Username:          admin
 * Password:          password saved in docker/.env
 5. Create a new database named "riggedbot".
