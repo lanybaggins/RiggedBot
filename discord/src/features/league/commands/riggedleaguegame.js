@@ -1,6 +1,5 @@
 import { ApplicationCommandOptionType } from "discord.js";
-import interactionReply from "../../../utils/discord/interactionReply.js";
-import { RiggedLeagueGame } from "../classes/RiggedLeagueGame.js";
+import * as RiggedLeague from "../classes/RiggedLeague.js";
 
 export const command = {
   name: "riggedleaguegame",
@@ -28,7 +27,6 @@ export const command = {
           value: 6,
         }
       ],
-
       required: false,
     },
     {
@@ -38,7 +36,7 @@ export const command = {
     },
   ],
   callback: async (client, interaction) => {
-    let game = new RiggedLeagueGame();
+    let game = new RiggedLeague.Game();
     await game.handleCommand(client, interaction);
   },
 };
