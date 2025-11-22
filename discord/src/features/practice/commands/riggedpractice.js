@@ -236,6 +236,13 @@ export const command = {
       await host.send({
         content: "Practice Game Started.",
         embeds: embeds,
+      }).catch(err => {
+        var responseMessage;
+        responseMessage = err.code === 50007 ?
+          `Could not send DM to host! Please enable DMs from server members and try again.` :
+          `Error sending DM to host! ${err.message}`;
+        interactionReply(interaction, responseMessage);
+        return;
       });
     }
     for (let i = 0; i < users.length; i++) {
@@ -280,7 +287,16 @@ export const command = {
       await user.send({
         content: "Practice Game Started.",
         embeds: [embed],
-      });
+      }).catch(err => {
+        errorRecipient = host ? host : interaction.user;
+        const responseMessage = err.code === 50007 ?
+          `Could not send DM to ${user.username}! They must enable DMs from server members and try again.` :
+          `Error sending DM to ${user.username}! ${err.message}`;
+        errorRecipient.send(responseMessage).catch(() => {
+          console.log("Also could not send error message to host/author.");
+          return;
+        })
+      })
     }
     await interactionReply(interaction, `The practice game has been started!`);
   },
