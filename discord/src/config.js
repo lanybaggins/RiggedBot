@@ -10,7 +10,8 @@ export default (isProduction) => {
     ],
     isProduction: isProduction,
     devs: [
-      "415848204136087563"
+      "415848204136087563",
+      "1405321512088633415"
     ],
     guilds: [
       {
