@@ -233,17 +233,19 @@ export const command = {
           fields: fields2,
         },
       ];
-      await host.send({
-        content: "Practice Game Started.",
-        embeds: embeds,
-      }).catch(err => {
-        var responseMessage;
-        responseMessage = err.code === 50007 ?
-          `Could not send DM to host! Please enable DMs from server members and try again.` :
+      try {
+        await host.send({
+          content: "Practice Game Started.",
+          embeds: embeds,
+        });
+      } catch (err) {
+        const responseMessage = err.code === 50007 ?
+          `Could not send DM to host! Host must enable DMs from server members and try again.` :
           `Error sending DM to host! ${err.message}`;
-        interactionReply(interaction, responseMessage);
+        console.log(responseMessage);
+        await interactionReply(interaction, responseMessage);
         return;
-      });
+      }
     }
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
@@ -284,19 +286,25 @@ export const command = {
         fields: fields,
         timestamp: new Date().toISOString(),
       };
-      await user.send({
-        content: "Practice Game Started.",
-        embeds: [embed],
-      }).catch(err => {
-        errorRecipient = host ? host : interaction.user;
+      try {
+        await user.send({
+          content: "Practice Game Started.",
+          embeds: [embed],
+        });
+      } catch (err) {
+        const errorRecipient = host ? host : interaction.user;
         const responseMessage = err.code === 50007 ?
           `Could not send DM to ${user.username}! They must enable DMs from server members and try again.` :
           `Error sending DM to ${user.username}! ${err.message}`;
-        errorRecipient.send(responseMessage).catch(() => {
-          console.log("Also could not send error message to host/author.");
-          return;
-        })
-      })
+        console.log(responseMessage);
+        try {
+          await errorRecipient.send(responseMessage);
+        } catch (err2) {
+            console.log(`Also could not send error message to host/author. ${err2.message}`);
+            interactionReply(interaction, `Error sending DM to ${user.username}, and could not notify the host/author!\n${err.message}\n${err2.message}`);
+            return;
+        }
+      }
     }
     await interactionReply(interaction, `The practice game has been started!`);
   },
