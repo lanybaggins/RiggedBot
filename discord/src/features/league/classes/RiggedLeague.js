@@ -62,7 +62,7 @@ export class Game {
     this.playerIds = [];
     this.status = "Setup";
     const newButtons = await this.announcementBuildButtons();
-    const newEmbeds = await this.announcementBuildEmbed();
+    const newEmbeds = await this.announcementBuildEmbed(guildSettings);
     const message = {
       content: "A new league game has been announced!",
       embeds: [newEmbeds],
@@ -170,10 +170,15 @@ export class Game {
     }
     return buttons;
   }
-  async announcementBuildEmbed() {
+  async announcementBuildEmbed(guildSettings) {
+    const leagueRoleId = guildSettings.leagueRoleId
+    let desc = 'Sign up for this league game by clicking the button below.'
+    if (leagueRoleId) {
+      desc = `<@&${leagueRoleId}> ${desc}`
+    }
     let embed = {
       title: "Rigged Caps - League Game Starting Soon",
-      description: "Sign up for this league game by clicking the button below.",
+      description: desc,
       fields: [
         {
           name: "Game ID",

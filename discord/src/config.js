@@ -17,6 +17,7 @@ export default (isProduction) => {
       {
         guildId: "1342301791664078870",
         leagueChannelId: isProduction ? "1405403401054982195" : "1421520972833493145",
+        leagueRoleId: "1342336762675986534",
         staffRoleId: "1405414227740594207"
       }
     ]
