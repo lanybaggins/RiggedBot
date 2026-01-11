@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType } from "discord.js";
-import interactionReply from "../../../utils/discord/interactionReply.js";
+import interactionReply from "../../../../utils/discord/interactionReply.js";
 
 export const command = {
   name: "riggedcreeper",
