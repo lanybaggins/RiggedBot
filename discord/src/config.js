@@ -10,8 +10,13 @@ export default (isProduction) => {
     ],
     isProduction: isProduction,
     devs: [
-      "415848204136087563",
-      "1405321512088633415"
+      "415848204136087563", //lanybaggins
+      "1405321512088633415", //lanytest
+    ],
+    mayhemHosts: [
+        "415848204136087563", //lanybaggins
+        "686655165368893537", //blitzwarlord
+        "106940748141711360", //1stcast
     ],
     guilds: [
       {
