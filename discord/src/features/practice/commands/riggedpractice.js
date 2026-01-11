@@ -1,5 +1,6 @@
 import { ApplicationCommandOptionType } from "discord.js";
 import interactionReply from "../../../utils/discord/interactionReply.js";
+import canBendRules from "../common/canBendRules.js";
 
 export const command = {
   name: "riggedpractice",
@@ -105,6 +106,7 @@ export const command = {
     if (imposterCount === null) {
       imposterCount = 2;
     }
+    const cantBendRules = !(canBendRules(client, author));
     let users = [];
     let userIds = [];
     for (let i = 1; i <= 6; i++) {
@@ -112,15 +114,15 @@ export const command = {
       if (null === user) {
         continue;
       }
-      if (user.bot) {
+      if (user.bot && cantBendRules) {
         await interactionReply(interaction, `You cannot specify a bot as a player!`);
         return;
       }
-      if (host && user.id === host.id) {
+      if (host && user.id === host.id && cantBendRules) {
         await interactionReply(interaction, `You cannot specify the host as a player!`);
         return;
       }
-      if (userIds.includes(user.id)) {
+      if (userIds.includes(user.id) && cantBendRules) {
         await interactionReply(interaction, `You cannot specify the same user multiple times!`);
         return;
       }
