@@ -24,6 +24,12 @@ export default (isProduction) => {
                 leagueChannelId: isProduction ? "1405403401054982195" : "1421520972833493145",
                 leagueRoleId: "1342336762675986534",
                 staffRoleId: "1405414227740594207"
+            },
+            {
+                guildId: "681626969670156320",
+                leagueChannelId: isProduction ? "1402721781189574686" : "",
+                leagueRoleId: "",
+                staffRoleId: ""
             }
         ]
     }
